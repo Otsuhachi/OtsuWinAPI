@@ -8,21 +8,37 @@ class User32:
     """user32.dllのAPIの一部を使いやすくしたクラス。
 
     現在実装されている関数は以下の通りです。
-    関数名の前に"[O]"が付いているものについては戻り値の型や一部処理の省略など簡素化された関数と、DLLオリジナルの関数の二つが実装されており、"O<func_name>"の方がオリジナルになります。
+    関数名の末尾に"[Ez]"が付いているものについては戻り値の型や一部処理の省略など簡素化された関数と、DLLオリジナルの関数の二つが実装されています。
 
+    - AttachThreadInput
     - BringWindowToTop
     - FindWindowExW
-    - [O]GetWindowRect
+    - GetWindowRect[Ez]
     - GetWindowTextLengthW
-    - [O]GetWindowTextW
+    - GetWindowTextW[Ez]
+    - GetWindowThreadProcessId[Ez]
     - IsWindowEnabled
     - MoveWindow
     - SendMessageW
-    - SetActivewindow
+    - SetActiveWindow
     - SetFocus
     - SetForegroundWindow
     - SetWindowPos
     """
+
+    @staticmethod
+    def AttachThreadInput(idAttach: int, idAttachTo: int, fAttach: bool) -> bool:
+        """スレッドの入力処理メカニズムを別のスレッドの入力処理メカニズムにアタッチまたはデタッチします。
+
+        Args:
+            idAttach (int): 別のスレッドにアタッチするスレッドの識別子。
+            idAttachTo (int): idAttachがアタッチされるスレッドの識別子。
+            fAttach (bool): Trueでアタッチ。Falseでデタッチ。
+
+        Returns:
+            bool: 成否。
+        """
+        return bool(ctypes.windll.user32.AttachThreadInput(idAttach, idAttachTo, fAttach))
 
     @staticmethod
     def BringWindowToTop(hWnd: int) -> bool:
@@ -57,11 +73,29 @@ class User32:
         return ctypes.windll.user32.FindWindowExW(hWndParent, hWndChildAfter, lpszClass, lpszWindow)
 
     @staticmethod
-    def GetWindowRect(hWnd: int) -> tuple[int, int, int, int]:
-        """ウィンドウの左上座標, 右下座標を返します。
+    def GetWindowRect(hWnd: int, lpRect: wintypes.LPRECT) -> bool:
+        """ウィンドウの外接する四角形のサイズを取得します。
 
-        DLL本体のGetWindowRectを簡素化しています。
-        本来のGetWindowRectを使用したい場合にはOGetWindowRectを使用してください。
+        寸法は左上隅を基準とした画面座標です。
+
+        この関数を簡素化したGetWindowRectEzがあります。
+
+        Args:
+            hWnd (int): ウィンドウハンドル。
+            lpRect (wintypes.LPRECT): 寸法を受け取るポインタ。
+
+        Returns:
+            bool: 成否。
+        """
+        return bool(ctypes.windll.user32.GetWindowRect(hWnd, lpRect))
+
+    @staticmethod
+    def GetWindowRectEz(hWnd: int) -> tuple[int, int, int, int]:
+        """ウィンドウの外接する四角形のサイズを取得します。
+
+        寸法は左上隅を基準とした画面座標です。
+
+        本来のGetWindowRectを簡素化しています。
 
         Args:
             hWnd (int): ウィンドウハンドル。
@@ -70,9 +104,8 @@ class User32:
             tuple[int, int, int, int]: (左x座標, 左y座標, 右x座標, 右y座標)のタプル。
         """
         rect = wintypes.RECT()
-        if not User32.OGetWindowRect(hWnd, ctypes.pointer(rect)):
+        if not User32.GetWindowRect(hWnd, ctypes.pointer(rect)):
             return -1, -1, -1, -1
-
         return cast(tuple[int, int, int, int], (rect.left, rect.top, rect.right, rect.bottom))
 
     @staticmethod
@@ -88,11 +121,28 @@ class User32:
         return ctypes.windll.user32.GetWindowTextLengthW(hWnd)
 
     @staticmethod
-    def GetWindowTextW(hWnd: int) -> str:
-        """ウィンドウのタイトルの文字列を返します。
+    def GetWindowTextW(hWnd: int, lpString: ctypes.Array[wintypes.WCHAR], nMaxCount: int) -> int:
+        """ウィンドウ(コントロール)のテキストをlpStringにコピーします。
+
+        文字列がバッファーより長い場合、文字列は切り捨てられ、`null`文字で終了します。
+
+        この関数を簡素化したGetWindowTextWEzがあります。
+
+        Args:
+            hWnd (int): ウィンドウハンドル。
+            lpString (ctypes.Array[wintypes.WCHAR]): テキストを受け取るバッファー。
+            nMaxCount (int): バッファにコピーする最大文字数。
+
+        Returns:
+            int: コピーされた文字列の長さ、または0。
+        """
+        return ctypes.windll.user32.GetWindowTextW(hWnd, lpString, nMaxCount)
+
+    @staticmethod
+    def GetWindowTextWEz(hWnd: int) -> str:
+        """ウィンドウ(コントロール)のテキストを返します。
 
         DLL本来のGetWindowTextWを簡素化しています。
-        本来のGetWindowTextWを使用したい場合にはOGetWindowTextWを使用してください。
 
         Args:
             hWnd (int): ウィンドウハンドル。
@@ -102,8 +152,38 @@ class User32:
         """
         text_length = User32.GetWindowTextLengthW(hWnd) + 1
         title = ctypes.create_unicode_buffer(text_length)
-        User32.OGetWindowTextW(hWnd, title, text_length)
+        User32.GetWindowTextW(hWnd, title, text_length)
         return title.value
+
+    @staticmethod
+    def GetWindowThreadProcessId(hWnd: int, lpdwProcessId: Optional[wintypes.LPDWORD] = None) -> int:
+        """ウィンドウを作成したスレッドIDを返し、lpdwProcessIdにポインタを渡していればポインタにプロセスIDをコピーします。
+
+        この関数を簡素化したGetWindowThreadProcessIdEzがあります。
+
+        Args:
+            hWnd (int): ウィンドウハンドル。
+            lpdwProcessId (Optional[wintypes.LPDWORD], optional): プロセスIDを受け取るポインタ。 Defaults to None.
+
+        Returns:
+            int: スレッドID。
+        """
+        return ctypes.windll.user32.GetWindowThreadProcessId(hWnd, lpdwProcessId)
+
+    @staticmethod
+    def GetWindowThreadProcessIdEz(hWnd: int) -> tuple[int, int]:
+        """ウィンドウのスレッドIDとプロセスIDを返します。
+
+        DLL本来のGetWindowThreadProcessIdを簡素化しています。
+
+        Args:
+            hWnd (int): ウィンドウハンドル。
+
+        Returns:
+            tuple[int, int]: (スレッドID, プロセスID)のタプル。
+        """
+        proc = wintypes.DWORD()
+        return User32.GetWindowThreadProcessId(hWnd, ctypes.pointer(proc)), proc.value
 
     @staticmethod
     def IsWindowEnabled(hWnd: int) -> bool:
@@ -133,33 +213,6 @@ class User32:
             bool: 成否。
         """
         return bool(ctypes.windll.user32.MoveWindow(hWnd, X, Y, nWidth, nHeight, bRepaint))
-
-    @staticmethod
-    def OGetWindowRect(hWnd: int, lpRect: wintypes.LPRECT) -> bool:
-        """DLL本来のGetWindowRectです。
-
-        Args:
-            hWnd (int): ウィンドウハンドル。
-            lpRect (wintypes.LPRECT): RECT構造体へのポインタ。
-
-        Returns:
-            bool: 成否。
-        """
-        return bool(ctypes.windll.user32.GetWindowRect(hWnd, lpRect))
-
-    @staticmethod
-    def OGetWindowTextW(hWnd: int, lpString: ctypes.Array[wintypes.WCHAR], nMaxCount: int) -> int:
-        """DLL本来のGetWindowTextWです。
-
-        Args:
-            hWnd (int): ウィンドウハンドル。
-            lpString (ctypes.Array[wintypes.WCHAR]): テキストを受け取るバッファー。
-            nMaxCount (int): バッファにコピーする最大文字数。
-
-        Returns:
-            int: コピーされた文字列の長さ、または0。
-        """
-        return ctypes.windll.user32.GetWindowTextW(hWnd, lpString, nMaxCount)
 
     @staticmethod
     def SendMessageW(
