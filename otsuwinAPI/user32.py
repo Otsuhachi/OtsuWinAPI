@@ -1,3 +1,4 @@
+__all__ = ('User32',)
 import ctypes
 import ctypes.wintypes as wintypes
 

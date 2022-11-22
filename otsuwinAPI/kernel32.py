@@ -1,3 +1,4 @@
+__all__ = ('Kernel32',)
 import ctypes
 
 
