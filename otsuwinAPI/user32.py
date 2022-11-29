@@ -25,6 +25,7 @@ class User32:
     - SetFocus
     - SetForegroundWindow
     - SetWindowPos
+    - ShowWindow
     """
 
     @staticmethod
@@ -296,3 +297,16 @@ class User32:
             bool: 成否。
         """
         return bool(ctypes.windll.user32.SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags))
+
+    @staticmethod
+    def ShowWindow(hWnd: int, nCmdShow: int) -> bool:
+        """指定したウィンドウの表示状態に設定します。
+
+        Args:
+            hWnd (int): ウィンドウハンドル。
+            nCmdShow (int): ウィンドウの表示方法。constants.nCmdShow内の定数を使用。
+
+        Returns:
+            bool: 以前のウィンドウの表示状態。
+        """
+        return bool(ctypes.windll.user32.ShowWindow(hWnd, nCmdShow))
