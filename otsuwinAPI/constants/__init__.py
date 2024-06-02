@@ -1,6 +1,6 @@
 __all__ = (
-    'hWndInsertAfter',
-    'nCmdShow',
-    'uFlags',
+    "hWndInsertAfter",
+    "nCmdShow",
+    "uFlags",
 )
 from . import hWndInsertAfter, nCmdShow, uFlags

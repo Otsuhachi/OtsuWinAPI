@@ -6,8 +6,7 @@ verify_ssl = true
 [packages]
 
 [dev-packages]
-flake8 = "*"
-yapf = "*"
+
 
 [requires]
 python_version = "3.11"

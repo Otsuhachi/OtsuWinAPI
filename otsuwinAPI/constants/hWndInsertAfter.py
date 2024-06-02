@@ -1,8 +1,8 @@
 __all__ = (
-    'HWND_BOTTOM',
-    'HWND_NOTOPMOST',
-    'HWND_TOP',
-    'HWND_TOPMOST',
+    "HWND_BOTTOM",
+    "HWND_NOTOPMOST",
+    "HWND_TOP",
+    "HWND_TOPMOST",
 )
 from typing import Final
 
