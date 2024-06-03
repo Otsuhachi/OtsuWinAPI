@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="otsuwinAPI",
-    version="1.3.0.311",
+    version="1.4.0.311",
     url="https://github.com/Otsuhachi/otsuwinAPI",
     description="WindowsAPIを追加していくライブラリ。",
     author="Otsuhachi",

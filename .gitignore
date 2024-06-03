@@ -1,2 +1,4 @@
 .venv
 upload.ps1
+build/
+otsuwinAPI.egg-info/
