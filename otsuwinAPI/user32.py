@@ -1,4 +1,3 @@
-__all__ = ("User32",)
 import ctypes
 import ctypes.wintypes as wintypes
 
@@ -15,6 +14,7 @@ class User32:
     - BringWindowToTop
     - FindWindowExW
     - EnumWindow[Ez]
+    - GetClassNameW[Ez]
     - GetWindowRect[Ez]
     - GetWindowTextLengthW
     - GetWindowTextW[Ez]
@@ -119,6 +119,29 @@ class User32:
             int: ウィンドウハンドル。
         """
         return User32.dll().FindWindowExW(hWndParent, hWndChildAfter, lpszClass, lpszWindow)
+
+    @staticmethod
+    def GetClassNameW(hWnd: int, lpClassName: ctypes.Array[wintypes.WCHAR], nMaxCount: int) -> int:
+        """ウィンドウが属するクラスの名前を取得する。
+
+        この関数を簡素化したGetClassNameWEzがある。
+
+        Args:
+            hWnd (int): ウィンドウハンドル。
+            lpClassName (ctypes.Array[wintypes.WCHAR]): クラス名を受け取るバッファ。
+            nMaxCount (int): バッファの長さ。
+
+        Returns:
+            int: バッファに登録された文字数。取得に失敗した場合は0。
+        """
+        return User32.dll().GetClassNameW(hWnd, lpClassName, nMaxCount)
+
+    @staticmethod
+    def GetClassNameWEz(hWnd: int) -> str:
+        text_length = User32.GetWindowTextLengthW(hWnd) + 1
+        class_name = ctypes.create_unicode_buffer(text_length)
+        User32.GetClassNameW(hWnd, class_name, text_length)
+        return class_name.value
 
     @staticmethod
     def GetWindowRect(hWnd: int, lpRect: wintypes.LPRECT) -> bool:
